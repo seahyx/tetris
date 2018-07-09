@@ -1,0 +1,61 @@
+body {
+    margin: 0px auto;
+    width: 100%;
+    background-color: black;
+}
+.content {
+    margin: 0px auto;
+    width: 95%;
+}
+nav ul, footer ul {
+    font-family:'Orbitron', 'Helvetica', 'Arial', 'Sans-Serif';
+    padding: 0px;
+    list-style: none;
+}
+nav ul li, footer ul li {
+    display: inline;
+    margin-right: 20px;
+}
+a {
+    text-decoration: none;
+    color: white;
+}
+a:hover {
+    text-decoration: underline;
+}
+h1 {
+    color: #999;
+    font-size: 3em;
+    font-family: 'Orbitron', 'Helvetica', 'Arial', 'Sans-Serif';
+}
+p {
+    font-size: 1.5em;
+    line-height: 1.4em;
+    color: #333;
+}
+nav {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+}
+footer {
+    font-size: 0.8em;
+    position: absolute;
+    z-index: 1;
+    bottom: 0;
+}
+
+ul.posts { 
+    margin: 20px auto 40px; 
+    font-size: 1.5em;
+}
+
+ul.posts li {
+    list-style: none;
+}
+
+canvas {
+    position: absolute;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
