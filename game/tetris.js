@@ -39,7 +39,7 @@ let scale = scaleToWindow(app.view);
 
 
 //Debug mode
-let DEBUG_MODE = true;
+let DEBUG_MODE = false;
 
 //Grid details
 let main_grid = {
@@ -53,6 +53,9 @@ let next_grid = {
 	height: 4,
 	hidden: 0
 }
+
+//Score container
+let score_window = {};
 
 //Size of each grid cell
 let unit_length = 90;
@@ -73,8 +76,33 @@ let c_background = 0x9aa680;
 app.renderer.backgroundColor = c_background;
 
 //Keyboard long-press time and repeat time (in seconds)
-let keyboard_ini_p_t = 0.25;
-let keyboard_rep_p_t = 0.06;
+let keyboard_ini_p_t = 0.15;
+let keyboard_rep_p_t = 0.05;
+
+//Text styles
+let style_text_1 = new PIXI.TextStyle({
+    fontFamily: "Orbitron",
+    fontSize: 120,
+    fontStyle: "italic",
+    fontVariant: "small-caps",
+    strokeThickness: 4
+});
+
+let style_text_2 = new PIXI.TextStyle({
+    fontFamily: "Orbitron",
+    fontSize: 140,
+    fontVariant: "small-caps",
+    strokeThickness: 5
+});
+
+let style_num_1 = new PIXI.TextStyle({
+    fontFamily: "Orbitron",
+    fontSize: 100,
+    //fontStyle: "italic",
+    strokeThickness: 2
+});
+
+
 
 //Arbitrary constants
 const SPAWN = 0;
@@ -82,6 +110,72 @@ const MOVE = 1;
 const ROTATE = 2;
 const CLOCKWISE = 0;
 const ANTI_CLOCKWISE = 1;
+const LEFT = 0;
+const RIGHT = 1;
+const UP = 2;
+const DOWN = 3;
+
+
+
+
+
+//Variables
+
+//KB obj constructor
+function KBObj() {
+	this.pressed = false;
+	this.press_duration = 0;
+	this.ini_rep = 0;
+}
+
+//KB Variables
+let left_arrow = new KBObj();
+let right_arrow = new KBObj();
+let up_arrow = new KBObj();
+let down_arrow = new KBObj();
+let l_key = new KBObj();
+let p_key = new KBObj();
+let space_key = new KBObj();
+
+//Array of all keys
+let keys = [
+	left_arrow,
+	right_arrow,
+	up_arrow,
+	down_arrow,
+	l_key,
+	p_key,
+	space_key];
+
+//player data
+let highscores = [];			//array of high score objects incl name, score, time played
+let stats = {
+	score: 0,					//current score
+	level: 1,					//current level
+	base_level: 1,				//starting level
+	total_lines: 0,				//total number of lines cleared the game
+	consec_clears: 0,			//number of non-stop consecutive clears
+	consec_tetris: 0,			//number of tetrises in a row
+	consec_t_spin_mini: 0,		//number of t-spin mini clear in a row (no wall-kick)
+	consec_t_spin_combo: 0		//number of t-spin clears in a row (wall-kick)
+};
+
+//Other variables
+let elapsed_time = 0;					//elapsed time from start of game
+let block_present = false;				//if there is a player-controlled tetromino in the game right now
+let gravity = 1;						//number of gravity drops per second
+let gravity_time = 1 / gravity;			//cooldown time for gravity to happen
+let c_gravity_timer = gravity_time;		//countdown timer for gravity to happen
+let c_drop_timer = 0;					//countdown timer to next drop
+let c_block_obj;						//current block object
+let isSet = false;						//if tetromino is already at setting position
+let c_set_timer = 0;					//set countdown timer
+let set_time = 2; 						//time to set the block once at setting position
+let next_shape = [];					//next coming shapes ids
+let next_shape_generate = 4;			//how many previews to generate
+let paused = false;						//if game is paused
+
+let dt = 0;
 
 
 
@@ -235,7 +329,7 @@ function Shape_sq(x, y) {
 
 
 
-/* Actual stuff working */
+/* GUI */
 
 
 //Main grid container
@@ -243,9 +337,10 @@ main_grid.container = new PIXI.Container();
 app.stage.addChild(main_grid.container);
 main_grid.container.x = unit_length;
 main_grid.container.y = app.renderer.height - 100;
+//Main 2d array (included in newGame())
+//main_grid.grid = generate2dGrid(main_grid);
 
-//Main 2d array
-main_grid.grid = generate2dGrid(main_grid);
+
 
 //Main border
 main_grid.boundary = new PIXI.Graphics();
@@ -260,10 +355,47 @@ main_grid.boundary.drawRoundedRect(
 	boundary_round);
 //Move anchor point to bottom-left
 main_grid.boundary.pivot.set(0, main_grid.height * (unit_length + 2*unit_margin));
+
+
+
+//Pause overlay container
+main_grid.pause_overlay = {};
+main_grid.pause_overlay.container = new PIXI.Container();
+
+//Pause background
+main_grid.pause_overlay.background = new PIXI.Graphics();
+main_grid.pause_overlay.background.beginFill(c_background, 1);
+main_grid.pause_overlay.background.drawRoundedRect(
+	0,
+	0,
+	main_grid.width * (unit_length + 2*unit_margin),
+	main_grid.height * (unit_length + 2*unit_margin));
+main_grid.pause_overlay.background.endFill();
+
+//Pause text
+main_grid.pause_overlay.text = new PIXI.Text("Paused", style_text_2);
+main_grid.pause_overlay.text.x = (main_grid.width * (unit_length + 2*unit_margin)) / 2;
+main_grid.pause_overlay.text.y = (main_grid.height * (unit_length + 2*unit_margin)) / 2;
+main_grid.pause_overlay.text.anchor.set(0.5, 0.5);
+
+//Add items to pause overlay container
+main_grid.pause_overlay.container.addChild(main_grid.pause_overlay.background);
+main_grid.pause_overlay.container.addChild(main_grid.pause_overlay.text);
+
+//Move container anchor point to bottom-left
+main_grid.pause_overlay.container.pivot.set(0, main_grid.height * (unit_length + 2*unit_margin));
+
+//If game is paused, make it invisible
+main_grid.pause_overlay.container.visible = paused;
+
+
+//Add stuff to the main container
 main_grid.container.addChild(main_grid.boundary);
+main_grid.container.addChild(main_grid.pause_overlay.container);
 
 
-//Next up grid container
+
+//Next piece grid container
 next_grid.container = new PIXI.Container();
 app.stage.addChild(next_grid.container);
 next_grid.container.x = app.renderer.width
@@ -272,9 +404,10 @@ next_grid.container.x = app.renderer.width
 next_grid.container.y =
 	(app.renderer.height - 100 - (main_grid.height * (unit_length + 2*unit_margin)))
 	+ next_grid.height * (unit_length + 2*unit_margin);
+//Generate 2d array for grid (included in newGame())
+//next_grid.grid = generate2dGrid(next_grid);
 
-next_grid.grid = generate2dGrid(next_grid);
-
+//Next piece grid boundary
 next_grid.boundary = new PIXI.Graphics();
 next_grid.boundary.lineStyle(boundary_thicc, c_filled, 1);
 next_grid.boundary.drawRoundedRect(
@@ -284,68 +417,48 @@ next_grid.boundary.drawRoundedRect(
 	next_grid.height * (unit_length + 2*unit_margin) + 2*boundary_padding,
 	boundary_round);
 next_grid.boundary.pivot.set(0, next_grid.height * (unit_length + 2*unit_margin));
+
+
+//Add stuff to next piece grid container
 next_grid.container.addChild(next_grid.boundary);
+
+
+
+//Score text
+let text_score = new PIXI.Text('Score', style_text_1);
+text_score.anchor.set(1, 0);
+
+text_score.x = 0;
+text_score.y = 0;
+
+//Score number
+let text_scoreVal = new PIXI.Text("0", style_num_1);
+text_scoreVal.anchor.set(1, 0);
+text_scoreVal.x = 0;
+text_scoreVal.y = 160;
+
+score_window.container = new PIXI.Container();
+app.stage.addChild(score_window.container);
+score_window.container.addChild(text_score);
+score_window.container.addChild(text_scoreVal);
+
+score_window.container.x = app.renderer.width - main_grid.container.x;
+score_window.container.y = next_grid.container.y + unit_length;
+
+
+
+
 
 
 
 /* Update loop */
 
+//Initializes game
+newGame();
 
-//KB Variables
-let left_arrow = {pressed: false, press_duration: 0, ini_rep: true};
-let right_arrow = {pressed: false, press_duration: 0, ini_rep: true};
-let up_arrow = {pressed: false, press_duration: 0, ini_rep: true};
-let down_arrow = {pressed: false, press_duration: 0, ini_rep: true};
-let l_key = {pressed: false, press_duration: 0, ini_rep: true};
-
-//Array of all keys
-let keys = [left_arrow, right_arrow, up_arrow, down_arrow, l_key];
-
-//player data
-let highscores = [];			//array of high score objects incl name, score, time played
-let stats = {
-	score: 0,					//current score
-	level: 1,					//current level
-	base_level: 1,				//starting level
-	total_lines: 0,				//total number of lines cleared the game
-	consec_clears: 0,			//number of non-stop consecutive clears
-	consec_tetris: 0,			//number of tetrises in a row
-	consec_t_spin_mini: 0,		//number of t-spin mini clear in a row (no wall-kick)
-	consec_t_spin_combo: 0		//number of t-spin clears in a row (wall-kick)
-};
-
-//Other variables
-let elapsed_time = 0;			//elapsed time from start of game
-let block_present = false;		//if there is a player-controlled tetromino in the game right now
-let gravity = 1;				//number of gravity drops per second
-let gravity_time = 1 / gravity;	//cooldown time for gravity to happen
-let c_gravity_timer = 0;		//countdown timer for gravity to happen
-let c_drop_timer = 0;			//countdown timer to next drop
-let c_block_obj;				//current block object
-let isSet = false;				//if tetromino is already at setting position
-let c_set_timer = 0;			//set countdown timer
-let set_time = 2; 				//time to set the block once at setting position
-let next_shape = [];			//next coming shapes ids
-let next_shape_generate = 4;	//how many previews to generate
-
-let dt = 0;
-
-//Generate next_shape ids
-for (var n = 0; n < next_shape_generate; n++) {
-	next_shape.push(Math.floor((Math.random() * Shapes.length) + 0));
-}
-
-
-//Set active shape
-c_block_obj = new Shapes[next_shape[0]](Math.floor(main_grid.width/2), main_grid.height);
-shiftPreview(next_shape, next_grid);
-
-//Spawn shape into main_grid
-drawShape(main_grid, -1, c_block_obj);
-block_present = true;
 
 //Define deltaTime ticker -- update function
-app.ticker.add(function(deltaTime) {
+let update = app.ticker.add(function(deltaTime) {
 
 	//dt change to per second
 	dt = deltaTime / 60;
@@ -362,8 +475,8 @@ app.ticker.add(function(deltaTime) {
 	//Test for drop
 	if (c_drop_timer <= 0) {
 
-		let moved = moveShape(main_grid, -1, c_block_obj, "down");
-		let moveable = testShape(main_grid, c_block_obj, "down"); //returns false if unable to drop further
+		let moved = moveShape(main_grid, -1, c_block_obj, DOWN);
+		let moveable = testShape(main_grid, c_block_obj, DOWN); //returns false if unable to drop further
 
 		//If the shape moved
 		if (moved) {
@@ -416,6 +529,12 @@ app.ticker.add(function(deltaTime) {
 	}
 
 
+
+	//Update scoreboard
+	text_scoreVal.text = stats.score.toString();
+
+
+
 	//KB responses
 	keys.forEach(function(key) {
 		if (key.pressed) {
@@ -454,15 +573,15 @@ app.ticker.add(function(deltaTime) {
 //left arrow
 left_arrow.event = keyboard(37);
 left_arrow.event.press = () => {
-	left_arrow.func();
+	if (!paused) left_arrow.func();
 	left_arrow.pressed = true;
 };
 left_arrow.event.release = () => {left_arrow.pressed = false;};
 left_arrow.func = function() {
 	if (block_present) {
-		moveShape(main_grid, -1, c_block_obj, "left");
+		moveShape(main_grid, -1, c_block_obj, LEFT);
 
-		let moveable = testShape(main_grid, c_block_obj, "down"); //returns false if unable to drop further
+		let moveable = testShape(main_grid, c_block_obj, DOWN); //returns false if unable to drop further
 		if (moveable) {
 			//Change to gravity timer
 			isSet = false;
@@ -476,15 +595,15 @@ left_arrow.func = function() {
 //right arrow
 right_arrow.event = keyboard(39);
 right_arrow.event.press = () => {
-	right_arrow.func();
+	if (!paused) right_arrow.func();
 	right_arrow.pressed = true;
 };
 right_arrow.event.release = () => {right_arrow.pressed = false;};
 right_arrow.func = function() {
 	if (block_present) {
-		moveShape(main_grid, -1, c_block_obj, "right");
+		moveShape(main_grid, -1, c_block_obj, RIGHT);
 
-		let moveable = testShape(main_grid, c_block_obj, "down"); //returns false if unable to drop further
+		let moveable = testShape(main_grid, c_block_obj, DOWN); //returns false if unable to drop further
 		if (moveable) {
 			//Change to gravity timer
 			isSet = false;
@@ -498,10 +617,11 @@ right_arrow.func = function() {
 //up arrow
 up_arrow.event = keyboard(38);
 up_arrow.event.press = () => {
-	up_arrow.func();
-	up_arrow.pressed = true;
+	if (!paused) up_arrow.func();
+	//up_arrow.pressed = true;
 };
-up_arrow.event.release = () => {up_arrow.pressed = false;};
+up_arrow.event.release = () => {//up_arrow.pressed = false;
+};
 up_arrow.func = function() {
 	if (block_present) {
 		rotateShape(main_grid, -1, c_block_obj, CLOCKWISE);
@@ -511,26 +631,29 @@ up_arrow.func = function() {
 //down arrow
 down_arrow.event = keyboard(40);
 down_arrow.event.press = () => {
-	down_arrow.func();
+	if (!paused) down_arrow.func();
 	down_arrow.pressed = true;
 };
 down_arrow.event.release = () => {down_arrow.pressed = false;};
 down_arrow.func = function() {
 	if (block_present) {
-		let moved = moveShape(main_grid, -1, c_block_obj, "down");
-		let moveable = testShape(main_grid, c_block_obj, "down"); //will return false if unable to drop further
+		let moved = moveShape(main_grid, -1, c_block_obj, DOWN);
+		let moveable = testShape(main_grid, c_block_obj, DOWN); //will return false if unable to drop further
 
-		//Test if shape managed to move
+		//Test if shape managed to move (soft drop)
 		if (moved) {
 			//Reset movement cooldown
 			c_gravity_timer = gravity_time;
+
+			//Award score for soft dropping (1 point per segment)
+			stats.score += 1 * c_block_obj.schematic.length;
 		}
 
 		//Test if the block cannot move anymore
 		if (!moveable) {
 			//If is in set mode
 			if (isSet) {
-				c_set_timer -= set_time / 4;
+				if (this.ini_rep) c_set_timer = 0;
 			} else {
 				//If not in set mode
 				//enables the block to be set
@@ -555,6 +678,41 @@ l_key.func = function() {
 		next_shape[0] = 5;
 		console.log("Next shape set to I");
 	}
+}
+
+//p key to pause
+p_key.event = keyboard(80);
+p_key.event.press = () => {
+	p_key.func();
+	p_key.pressed = true;
+};
+p_key.event.release = () => {p_key.pressed = false;};
+p_key.func = function() {
+	//Pause/unpaused the game
+	if (paused) {
+		//Unpause game
+		paused = false;
+		update.start();
+	} else {
+		//Pause game
+		paused = true;
+		update.stop();
+	}
+
+	main_grid.pause_overlay.container.visible = paused;
+	app.render();
+}
+
+//space key for hard drop
+space_key.event = keyboard(32);
+space_key.event.press = () => {
+	space_key.func();
+	//space_key.pressed = true;
+};
+space_key.event.release = () => {//space_key.pressed = false;
+};
+space_key.func = function() {
+	hardDropShape(main_grid, c_block_obj, stats);
 }
 
 
@@ -842,11 +1000,11 @@ function moveShape(grid, id, shape, direction) {
 	//Erase shape first
 	drawShape(grid, 0, shape);
 
-	if (direction == "left") {
+	if (direction == LEFT) {
 		shape.x--;
-	} else if (direction == "right") {
+	} else if (direction == RIGHT) {
 		shape.x++;
-	} else if (direction == "down") {
+	} else if (direction == DOWN) {
 		shape.y--;
 	}
 
@@ -918,11 +1076,11 @@ function testShape(grid, shape, direction) {
 	//Default movement to valid
 	let valid = true;
 
-	if (direction == "left") {
+	if (direction == LEFT) {
 		shape.x--;
-	} else if (direction == "right") {
+	} else if (direction == RIGHT) {
 		shape.x++;
-	} else if (direction == "down") {
+	} else if (direction == DOWN) {
 		shape.y--;
 	}
 
@@ -966,6 +1124,20 @@ function testShape(grid, shape, direction) {
 	shape.y = ori_y;
 
 	return valid;
+}
+
+//Hard drop shape
+function hardDropShape(grid, shape, stats) {
+	while (true) {
+		let moved = moveShape(grid, 1, shape, DOWN);
+		if (moved) {
+			stats.score += 2 * shape.schematic.length;
+			isSet = true;
+		} else {
+			break;
+		}
+	}
+	c_set_timer = 0;
 }
 
 //Calculate anchor coordinates - anchor is the shape's 0, 0 coordinate, relative to grid coordinates
@@ -1202,15 +1374,61 @@ function calcScore(shape, lines, stats) {
 
 //Shift preview ids and shape
 function shiftPreview(array, grid_next) {
-	console.log(grid_next.grid);
+
 	drawShape(grid_next, 0, new Shapes[array[0]](Math.ceil(grid_next.width / 2), Math.floor(grid_next.height / 2)));
 
-	array.shift();
-	array.push(Math.floor((Math.random() * Shapes.length) + 0));
+	if (!DEBUG_MODE) {
+		array.shift();
+		array.push(Math.floor((Math.random() * Shapes.length) + 0));
+	}
 
 	drawShape(grid_next, 1, new Shapes[array[0]](Math.ceil(grid_next.width / 2), Math.floor(grid_next.height / 2)));
 
 	return array;
+}
+
+//Starts a new game and resets any addition variables passed to it to zero
+//context-specific
+function newGame() {
+	//Regenerate grid
+	main_grid.grid = generate2dGrid(main_grid);
+	next_grid.grid = generate2dGrid(next_grid);
+
+	//Generate shape_next ids
+	for (var n = 0; n < next_shape_generate; n++) {
+		if (n > next_shape.length - 1) {
+			next_shape.push(Math.floor((Math.random() * Shapes.length) + 0));
+		} else {
+			next_shape[n] = Math.floor((Math.random() * Shapes.length) + 0);
+		}
+	}
+
+	//Set active shape
+	c_block_obj = new Shapes[next_shape[0]](Math.floor(main_grid.width/2), main_grid.height);
+	shiftPreview(next_shape, next_grid);
+
+	//Spawn shape into main_grid
+	drawShape(main_grid, -1, c_block_obj);
+	block_present = true;
+
+	//Reset vars
+	stats = {
+		score: 0,					//current score
+		level: 1,					//current level
+		base_level: 1,				//starting level
+		total_lines: 0,				//total number of lines cleared the game
+		consec_clears: 0,			//number of non-stop consecutive clears
+		consec_tetris: 0,			//number of tetrises in a row
+		consec_t_spin_mini: 0,		//number of t-spin mini clear in a row (no wall-kick)
+		consec_t_spin_combo: 0		//number of t-spin clears in a row (wall-kick)
+	};
+
+	elapsed_time = 0;						//elapsed time from start of game
+	gravity_time = 1 / gravity;				//cooldown time for gravity to happen
+	c_gravity_timer = gravity_time;			//countdown timer for gravity to happen
+	c_drop_timer = 0;						//countdown timer to next drop
+	isSet = false;							//if tetromino is already at setting position
+	c_set_timer = 0;						//set countdown timer
 }
 
 
