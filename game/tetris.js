@@ -357,6 +357,10 @@ main_grid.boundary.drawRoundedRect(
 main_grid.boundary.pivot.set(0, main_grid.height * (unit_length + 2*unit_margin));
 
 
+//Grid unit container - make sure it's at the back
+main_grid.unit_container = new PIXI.Container();
+
+
 
 //Pause overlay container
 main_grid.pause_overlay = {};
@@ -390,6 +394,7 @@ main_grid.pause_overlay.container.visible = paused;
 
 
 //Add stuff to the main container
+main_grid.container.addChild(main_grid.unit_container);
 main_grid.container.addChild(main_grid.boundary);
 main_grid.container.addChild(main_grid.pause_overlay.container);
 
@@ -407,6 +412,9 @@ next_grid.container.y =
 //Generate 2d array for grid (included in newGame())
 //next_grid.grid = generate2dGrid(next_grid);
 
+//Container for grid units
+next_grid.unit_container = new PIXI.Container();
+
 //Next piece grid boundary
 next_grid.boundary = new PIXI.Graphics();
 next_grid.boundary.lineStyle(boundary_thicc, c_filled, 1);
@@ -420,6 +428,7 @@ next_grid.boundary.pivot.set(0, next_grid.height * (unit_length + 2*unit_margin)
 
 
 //Add stuff to next piece grid container
+next_grid.container.addChild(next_grid.unit_container);
 next_grid.container.addChild(next_grid.boundary);
 
 
@@ -749,7 +758,7 @@ function generate2dGrid(grid) {
 
 			//only display the visible cells
 			if (y < grid.height) {
-				grid.container.addChild(obj.sprite);
+				grid.unit_container.addChild(obj.sprite);
 				obj.sprite.tint = c_empty;
 			}
 
