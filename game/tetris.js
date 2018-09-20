@@ -45,13 +45,15 @@ let DEBUG_MODE = false;
 let main_grid = {
 	width: 10,
 	height: 20,
-	hidden: 2	//Hidden extra grid at the top of the visible grid
+	hidden: 2,	//Hidden extra grid at the top of the visible grid
+	gameover: 1	//Hidden row of grid to test for gameovers
 };
 
 let next_grid = {
 	width: 4,
 	height: 4,
-	hidden: 0
+	hidden: 0,
+	gameover: 0
 }
 
 //Score container
@@ -469,6 +471,8 @@ newGame();
 //Define deltaTime ticker -- update function
 let update = app.ticker.add(function(deltaTime) {
 
+	let shapeOverwrite = false;
+
 	//dt change to per second
 	dt = deltaTime / 60;
 	elapsed_time += dt;
@@ -510,7 +514,7 @@ let update = app.ticker.add(function(deltaTime) {
 				//Set the shape (turn id to 1)
 				drawShape(main_grid, 1, c_block_obj);
 
-				//Clear lines
+				//Clear lines if any
 				clearLines(main_grid, c_block_obj, stats);
 
 				//Set active shape
@@ -518,7 +522,7 @@ let update = app.ticker.add(function(deltaTime) {
 				shiftPreview(next_shape, next_grid);
 
 				//Spawn shape into main_grid
-				drawShape(main_grid, -1, c_block_obj);
+				shapeOverwrite = drawShape(main_grid, -1, c_block_obj);
 				block_present = true;
 
 				//Reset gravity timer for new block
@@ -537,12 +541,13 @@ let update = app.ticker.add(function(deltaTime) {
 		}
 	}
 
-
-
 	//Update scoreboard
 	text_scoreVal.text = stats.score.toString();
 
-
+	//Check for gameover
+	if (isGameover(main_grid) || shapeOverwrite) {
+		gameover(stats.score);
+	}
 
 	//KB responses
 	keys.forEach(function(key) {
@@ -746,7 +751,7 @@ function generate2dGrid(grid) {
 		arr.push([]);
 
 		//Filling the column
-		for (var y = 0; y < grid.height + grid.hidden; y++) {
+		for (var y = 0; y < grid.height + grid.hidden + grid.gameover; y++) {
 
 			let obj = new GridUnit();
 
@@ -841,8 +846,10 @@ function tintCell(grid, x, y) {
 	}
 }
 
-//Draw a shape onto the grid
+//Draw a shape onto the grid and returns if shape has overwritten and set cells
 function drawShape(grid, id, shape) {
+	//If current shape has overwritten any set cells due to lack of space
+	let isOverwrite = false;
 
 	//Get anchor coords
 	let anchor = anchorCoordinates(shape);
@@ -856,7 +863,9 @@ function drawShape(grid, id, shape) {
 
 			//Test if cell to be drawn is within grid boundaries
 			if (seg.x < grid.width && seg.x >= 0 &&
-				seg.y < grid.height && seg.y >= 0) {
+				seg.y < grid.height + grid.hidden + grid.gameover && seg.y >= 0) {
+
+				isOverwrite = grid.grid[seg.x][seg.y].id == 1;
 
 				grid.grid[seg.x][seg.y].id = id;
 
@@ -865,6 +874,8 @@ function drawShape(grid, id, shape) {
 			}
 		}
 	);
+
+	return isOverwrite;
 }
 
 //Checks for positions during rotations and rotate if possible
@@ -922,24 +933,17 @@ function rotateShape(grid, id, shape, direction) {
 
 					//Test if cell to be drawn is within grid boundaries
 					if (seg.x < grid.width && seg.x >= 0 &&
-						seg.y < grid.height + grid.hidden && seg.y >= 0) {
-
+						seg.y < grid.height + grid.hidden + grid.gameover && seg.y >= 0) {
 						//Within boundary
-
-						//Exclude id check on hidden grid
-						if (seg.y < grid.height) {
-							switch(grid.grid[seg.x][seg.y].id) {
-
-								//If testing cell is occupied
-								case 1:
-									valid = false;
-									break;
-							}
+						switch(grid.grid[seg.x][seg.y].id) {
+							//If testing cell is occupied
+							case 1:
+								valid = false;
+								break;
 						}
 
 						if (!valid) break;
 					} else {
-
 						//Not within boundary
 						valid = false;
 						break;
@@ -1029,19 +1033,14 @@ function moveShape(grid, id, shape, direction) {
 
 		//Test if cell to be drawn is within grid boundaries
 		if (seg.x < grid.width && seg.x >= 0 &&
-			seg.y < grid.height + grid.hidden && seg.y >= 0) {
+			seg.y < grid.height + grid.hidden + grid.gameover && seg.y >= 0) {
 
 			//Within boundary
-
-			//Exclude id check on hidden grid
-			if (seg.y < grid.height) {
-				switch(grid.grid[seg.x][seg.y].id) {
-
-					//If testing cell is occupied
-					case 1:
-						valid = false;
-						break;
-				}
+			switch(grid.grid[seg.x][seg.y].id) {
+				//If testing cell is occupied
+				case 1:
+					valid = false;
+					break;
 			}
 			
 			if (!valid) break;
@@ -1105,24 +1104,17 @@ function testShape(grid, shape, direction) {
 
 		//Test if cell to be drawn is within grid boundaries
 		if (seg.x < grid.width && seg.x >= 0 &&
-			seg.y < grid.height + grid.hidden && seg.y >= 0) {
-
+			seg.y < grid.height + grid.hidden + grid.gameover && seg.y >= 0) {
 			//Within boundary
-
-			//Exclude id check on hidden grid
-			if (seg.y < grid.height) {
-				switch(grid.grid[seg.x][seg.y].id) {
-
-					//If testing cell is occupied
-					case 1:
-						valid = false;
-						break;
-				}
+			switch(grid.grid[seg.x][seg.y].id) {
+				//If testing cell is occupied
+				case 1:
+					valid = false;
+					break;
 			}
 			
 			if (!valid) break;
 		} else {
-
 			//Not within boundary
 			valid = false;
 			break;
@@ -1396,6 +1388,27 @@ function shiftPreview(array, grid_next) {
 	return array;
 }
 
+//Check if gameover
+function isGameover(grid) {
+	if (grid == null) return;
+
+	//gameover var
+	let gg = false;
+
+	//Check on hidden gameover row in the grid
+	let gameover_row = grid.height + grid.hidden + grid.gameover - 1;
+
+	//Check if any cell is filled in the gameover row
+	for (var x = 0; x < grid.width; x++) {
+		if (grid.grid[x][gameover_row].id == 1) {	//1 means filled
+			gg = true;
+			break;	//If any cell is filled, escape from loop
+		}
+	}
+
+	return gg;
+}
+
 //Starts a new game and resets any addition variables passed to it to zero
 //context-specific
 function newGame() {
@@ -1438,9 +1451,106 @@ function newGame() {
 	c_drop_timer = 0;						//countdown timer to next drop
 	isSet = false;							//if tetromino is already at setting position
 	c_set_timer = 0;						//set countdown timer
+	paused = false;
 }
 
+//Gameover sequence
+function gameover(score) {
+	//Create gameover window
+	let ggWindow = createWindow(
+		"Gameover!",
+		"You have scored " + score.toString() + " points.",
+		"ok",
+		1500, 1500,
+		function() {
+			//console.log(this);
+			//this refers to the button object
+			this.parent.destroy();
+			newGame();
+			update.start();
+		});
+	app.stage.addChild(ggWindow.container);
 
+	paused = true;	//pause the game
+	update.stop();
+}
+
+// Draw window function
+function createWindow(titleText, messageText, buttonText, size_x, size_y, mouseDownFunc) {
+	let position_x = app.renderer.width / 2;
+	let position_y = app.renderer.height / 2;
+
+	//Create the main window object
+	let msgWindow = {};
+	msgWindow.container = new PIXI.Container();
+
+	//Window background
+	msgWindow.background = new PIXI.Graphics();
+	msgWindow.background.beginFill(c_background, 1);
+	msgWindow.background.drawRect(
+		-boundary_padding,
+		0,
+		size_x + boundary_padding,
+		size_y + boundary_padding);
+	msgWindow.background.endFill();
+
+	//Window boundary (border)
+	msgWindow.boundary = new PIXI.Graphics();
+	msgWindow.boundary.lineStyle(boundary_thicc, c_filled, 1);
+	msgWindow.boundary.drawRoundedRect(
+		0,
+		0,
+		size_x,
+		size_y,
+		boundary_round);
+
+	//Title text
+	msgWindow.title = new PIXI.Text(titleText, style_text_2);
+	msgWindow.title.x = size_x / 2;
+	msgWindow.title.y = boundary_padding;
+	msgWindow.title.anchor.set(0.5, 0);
+
+	//Message text
+	let msg_style = style_text_1.clone();
+	msg_style.wordWrap = true;
+	msg_style.wordWrapWidth = size_x - (2 * boundary_padding);
+	msgWindow.message = new PIXI.Text(messageText, msg_style);
+	msgWindow.message.x = size_x / 2;
+	msgWindow.message.y = size_y / 2;
+	msgWindow.message.anchor.set(0.5, 0.5);
+
+	//Button text
+	let btn_style = style_text_2.clone();
+	btn_style.strokeThickness = 6;
+	btn_style.fontVariant = "all-caps";
+	msgWindow.button = new PIXI.Text(buttonText, msg_style);
+	msgWindow.button.x = size_x / 2;
+	msgWindow.button.y = size_y - boundary_padding;
+	msgWindow.button.anchor.set(0.5, 1);
+	msgWindow.button.interactive = true;
+	msgWindow.button.buttonMode = true;
+	msgWindow.button.on('pointerdown', mouseDownFunc)
+			        .on('pointerup', function() {})
+			        .on('pointerupoutside', function() {})
+			        .on('pointerover', function() {})
+			        .on('pointerout', function() {});
+
+
+	//Move container anchor point to center
+	msgWindow.container.pivot.set(size_x / 2, size_y / 2);
+
+	msgWindow.container.addChild(msgWindow.background);
+	msgWindow.container.addChild(msgWindow.boundary);
+	msgWindow.container.addChild(msgWindow.title);
+	msgWindow.container.addChild(msgWindow.message);
+	msgWindow.container.addChild(msgWindow.button);
+
+	msgWindow.container.x = position_x;
+	msgWindow.container.y = position_y;
+	
+
+	return msgWindow;
+}
 
 
 /* Keystroke listener */
