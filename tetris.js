@@ -24,6 +24,7 @@ document.getElementById("canvas").appendChild(app.view);
 
 //Make the canvas fill the browser window proportionately
 scaleToWindow(app.view);
+
 //...and whenever the window is resized
 window.addEventListener("resize", function(event){ 
 	scaleToWindow(app.view);
