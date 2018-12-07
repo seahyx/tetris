@@ -84,25 +84,25 @@ let keyboard_rep_p_t = 0.05;
 
 //Text styles
 let style_text_1 = new PIXI.TextStyle({
-    fontFamily: "Orbitron",
-    fontSize: 120,
-    fontStyle: "italic",
-    fontVariant: "small-caps",
-    strokeThickness: 4
+	fontFamily: "Orbitron",
+	fontSize: 120,
+	fontStyle: "italic",
+	fontVariant: "small-caps",
+	strokeThickness: 4
 });
 
 let style_text_2 = new PIXI.TextStyle({
-    fontFamily: "Orbitron",
-    fontSize: 140,
-    fontVariant: "small-caps",
-    strokeThickness: 5
+	fontFamily: "Orbitron",
+	fontSize: 140,
+	fontVariant: "small-caps",
+	strokeThickness: 5
 });
 
 let style_num_1 = new PIXI.TextStyle({
-    fontFamily: "Orbitron",
-    fontSize: 100,
-    //fontStyle: "italic",
-    strokeThickness: 2
+	fontFamily: "Orbitron",
+	fontSize: 100,
+	//fontStyle: "italic",
+	strokeThickness: 2
 });
 
 
@@ -635,7 +635,7 @@ up_arrow.event.press = () => {
 	if (!paused) up_arrow.func();
 	//up_arrow.pressed = true;
 };
-up_arrow.event.release = () => {//up_arrow.pressed = false;
+up_arrow.event.release = () => {	//up_arrow.pressed = false;
 };
 up_arrow.func = function() {
 	if (block_present) {
@@ -724,7 +724,7 @@ space_key.event.press = () => {
 	space_key.func();
 	//space_key.pressed = true;
 };
-space_key.event.release = () => {//space_key.pressed = false;
+space_key.event.release = () => {	//space_key.pressed = false;
 };
 space_key.func = function() {
 	hardDropShape(main_grid, c_block_obj, stats);
@@ -1465,7 +1465,7 @@ function gameover(score) {
 		1500, 1500,
 		function() {
 			//console.log(this);
-			//this refers to the button object
+			//this refers to the button object. this.parent is the window
 			this.parent.destroy();
 			newGame();
 			update.start();
@@ -1522,19 +1522,18 @@ function createWindow(titleText, messageText, buttonText, size_x, size_y, mouseD
 
 	//Button text
 	let btn_style = style_text_2.clone();
-	btn_style.strokeThickness = 6;
-	btn_style.fontVariant = "all-caps";
-	msgWindow.button = new PIXI.Text(buttonText, msg_style);
+	btn_style.strokeThickness = 7;
+	msgWindow.button = new PIXI.Text(buttonText, btn_style);
 	msgWindow.button.x = size_x / 2;
 	msgWindow.button.y = size_y - boundary_padding;
 	msgWindow.button.anchor.set(0.5, 1);
 	msgWindow.button.interactive = true;
 	msgWindow.button.buttonMode = true;
 	msgWindow.button.on('pointerdown', mouseDownFunc)
-			        .on('pointerup', function() {})
-			        .on('pointerupoutside', function() {})
-			        .on('pointerover', function() {})
-			        .on('pointerout', function() {});
+					.on('pointerup', function() {})
+					.on('pointerupoutside', function() {})
+					.on('pointerover', function() {})
+					.on('pointerout', function() {});
 
 
 	//Move container anchor point to center
@@ -1552,6 +1551,7 @@ function createWindow(titleText, messageText, buttonText, size_x, size_y, mouseD
 
 	return msgWindow;
 }
+
 
 
 /* Keystroke listener */
