@@ -40,7 +40,7 @@ window.addEventListener("resize", function(event){
 let DEBUG_MODE = false;
 
 //Version number
-const VERSION = 1.0;
+const VERSION = "1.0.01";
 console.log("Tetris version " + VERSION);
 
 //Grid details
@@ -832,6 +832,7 @@ function generateCell(x, y) {
 	sprite.x = x;
 	sprite.y = y;
 
+	obj.destroy();
 
 	return sprite;
 }
