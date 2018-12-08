@@ -39,6 +39,10 @@ window.addEventListener("resize", function(event){
 //Debug mode
 let DEBUG_MODE = false;
 
+//Version number
+const VERSION = 1.0;
+console.log("Tetris version " + VERSION);
+
 //Grid details
 let main_grid = {
 	width: 10,
