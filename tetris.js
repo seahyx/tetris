@@ -23,15 +23,12 @@ let app = new PIXI.Application({
 document.getElementById("canvas").appendChild(app.view);
 
 //Make the canvas fill the browser window proportionately
-scaleToWindow(app.view);
+let scale = scaleToWindow(app.view, 50);
 
 //...and whenever the window is resized
 window.addEventListener("resize", function(event){ 
-	scaleToWindow(app.view);
+	scale = scaleToWindow(app.view, 50);
 });
-
-//Get the scaling factor
-let scale = scaleToWindow(app.view);
 
 
 
