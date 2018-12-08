@@ -136,6 +136,7 @@ let down_arrow = new KBObj();
 let l_key = new KBObj();
 let p_key = new KBObj();
 let space_key = new KBObj();
+let r_key = new KBObj();
 
 //Array of all keys
 let keys = [
@@ -145,7 +146,8 @@ let keys = [
 	down_arrow,
 	l_key,
 	p_key,
-	space_key];
+	space_key,
+	r_key];
 
 //player data
 let highscores = [];			//array of high score objects incl name, score, time played
@@ -700,7 +702,7 @@ p_key.event.press = () => {
 };
 p_key.event.release = () => {p_key.pressed = false;};
 p_key.func = function() {
-	//Pause/unpaused the game
+	//Pause/unpause the game
 	if (paused) {
 		//Unpause game
 		paused = false;
@@ -726,6 +728,19 @@ space_key.event.release = () => {	//space_key.pressed = false;
 space_key.func = function() {
 	hardDropShape(main_grid, c_block_obj, stats);
 }
+
+//r key to restart
+r_key.event = keyboard(82);
+r_key.event.press = () => {
+	r_key.func();
+	r_key.pressed = true;
+};
+r_key.event.release = () => {r_key.pressed = false;};
+r_key.func = function() {
+	//New game
+	newGame();
+}
+
 
 
 
@@ -778,6 +793,9 @@ function generateCell(x, y) {
 	//Start with a graphic object
 	let obj = new PIXI.Graphics();
 
+	//Debug name
+	obj.name = "cell";
+
 	//Define stroke width and colour
 	obj.lineStyle(unit_thicc, 0xFFFFFF, 1);
 	//Draw rectangle border
@@ -810,11 +828,13 @@ function generateCell(x, y) {
 	sprite.x = x;
 	sprite.y = y;
 
+
 	return sprite;
 }
 
 //Updates colour of a unit cell
 function tintCell(grid, x, y) {
+
 	//If target cell is in hidden rows
 	if (y >= grid.height) {return;}
 
