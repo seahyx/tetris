@@ -832,7 +832,7 @@ function generateCell(x, y) {
 	sprite.x = x;
 	sprite.y = y;
 
-	obj.destroy();
+	obj.destroy(true);
 
 	return sprite;
 }
@@ -1436,7 +1436,9 @@ function isGameover(grid) {
 //context-specific
 function newGame() {
 	//Regenerate grid
+	if (main_grid.unit_container.children.length > 0) main_grid.unit_container.removeChildren();
 	main_grid.grid = generate2dGrid(main_grid);
+	if (next_grid.unit_container.children.length > 0) next_grid.unit_container.removeChildren();
 	next_grid.grid = generate2dGrid(next_grid);
 
 	//Generate shape_next ids
@@ -1488,7 +1490,7 @@ function gameover(score) {
 		function() {
 			//console.log(this);
 			//this refers to the button object. this.parent is the window
-			this.parent.destroy();
+			this.parent.destroy(true);
 			newGame();
 			update.start();
 		});
