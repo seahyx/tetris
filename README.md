@@ -1,5 +1,5 @@
 # tetris - PIXI.js
-A mini tetris game made using HTML 5 and [Pixi.js](http://www.pixijs.com)
+A mini tetris game made using HTML 5 and [Pixi.js](http://www.pixijs.com).
 My first project done in javascript. The code is absolutely horrible but I learned some great things from it.
 
 # Features:
