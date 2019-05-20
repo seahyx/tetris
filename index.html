@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Tetris</title>
+		<title>Tetris - seahyx.github.io</title>
 		<meta name="viewport" content="user-scalable=yes, initial-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
 		<!-- link to main stylesheet -->
 		<link rel="stylesheet" type="text/css" href="../seahyx.github.io/css/default-style.css">
+		<link rel="stylesheet" type="text/css" href="css/tetris-style.css">
 	</head>
 	<body>
 		<div id="transition-element"></div>
 
-		<div class="content">
-			<nav>
-	    		<ul>
-	        		<li><a href="../seahyx.github.io/index.html">Home</a></li>
-		        	<li><a href="../seahyx.github.io/about.html">About</a></li>
-	    		</ul>
-			</nav>
+		<header>
+			<ul>
+				<li><a href="../seahyx.github.io/index.html">Home</a></li>
+				<li><a href="../seahyx.github.io/about.html">About</a></li>
+			</ul>
+		</header>
 
-			<div id="canvas" class="canvas">
-			</div>
-
-			<footer>
-	    		<ul>
-	        		<li><a href="mailto:seahyx@gmail.com">email</a></li>
-	        		<li><a href="https://github.com/seahyx">github.com/seahyx</a></li>
-	        		<li><a href="./index.html">tetris</a></li>
-	        		<li><a href="../star-field/index.html">star-field</a></li>
-				</ul>
-			</footer>
+		<div id="content">
+			
+			<div id="canvas-container"></div>
+			
 		</div>
 
+		<footer>
+			<ul>
+				<li><a href="mailto:seahyx@gmail.com">email</a></li>
+				<li><a href="https://github.com/seahyx">github.com/seahyx</a></li>
+				<li><a href="./index.html">tetris</a></li>
+				<li><a href="../star-field/index.html">star-field</a></li>
+			</ul>
+		</footer>
+
 		<!-- tetris game scripts -->
-		<script type="text/javascript" src="./pixi.min.js"></script>
+		<script type="text/javascript" src="pixi.min.js"></script>
 		<script type="text/javascript" src="../scaleToWindow/scaleToWindow.js"></script>
-		<script type="text/javascript" src="./tetris.js"></script>
+		<script type="text/javascript" src="tetris.js"></script>
 		<!-- Instantclick scripts -->
 		<script type="text/javascript" src="../seahyx.github.io/instantclick.min.js" data-no-instant></script>
 		<script data-no-instant>

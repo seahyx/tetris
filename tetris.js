@@ -20,7 +20,7 @@ let app = new PIXI.Application({
 });
 
 //Add the canvas that Pixi automatically created for you to the HTML document
-document.getElementById("canvas").appendChild(app.view);
+document.getElementById("canvas-container").appendChild(app.view);
 
 //Make the canvas fill the browser window proportionately
 let scale = scaleToWindow(app.view, 50);
