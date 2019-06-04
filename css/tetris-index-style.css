@@ -1,0 +1,112 @@
+.content-project {
+	width: 100%;
+	height: 100vh;
+	min-height: 100vh;
+
+	position: relative;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	scroll-snap-align: start;
+}
+.content-project h1 a {
+	display: flex;
+
+	font-size: 1.5em;
+	font-family: 'QuickSand', sans-serif;
+	font-weight: 300;
+	text-decoration: none;
+	text-transform: uppercase;
+	text-align: center;
+	text-shadow: 0 3px 0 black;
+
+	-webkit-transform: translateY(-3px);
+	-moz-transform: translateY(-3px);
+	-ms-transform: translateY(-3px);
+	-o-transform: translateY(-3px);
+	transform: translateY(-3px);
+
+	opacity: 0.87;
+
+	-webkit-transition: all 0.25s ease;
+	-moz-transition: all 0.25s ease;
+	-ms-transition: all 0.25s ease;
+	-o-transition: all 0.25s ease;
+	transition: all 0.25s ease;
+}
+.content-project h1 a:hover {
+	text-shadow: 2px 7px 0 black;
+
+	-webkit-transform: translateY(-7px);
+	-moz-transform: translateY(-7px);
+	-ms-transform: translateY(-7px);
+	-o-transform: translateY(-7px);
+	transform: translateY(-7px);
+}
+.content-project h1 a:active {
+	text-shadow: 0 0 0 black;
+
+	-webkit-transform: none;
+	-moz-transform: none;
+	-ms-transform: none;
+	-o-transform: none;
+	transform: none;
+
+	-webkit-transition: none;
+	-moz-transition: none;
+	-ms-transition: none;
+	-o-transition: none;
+	transition: none;
+}
+
+.content-container {
+	display: inherit;
+	justify-content: inherit;
+	align-items: inherit;
+	flex-direction: inherit;
+
+	z-index: 1;
+}
+W
+.background-overlay {
+	width: inherit;
+	height: inherit;
+
+	position: absolute;
+
+	background-color: rgba(0, 0, 0, .2);
+}
+
+.background-gallery {
+	width: inherit;
+	height: inherit;
+
+	position: absolute;
+
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: center;
+	align-items: center;
+
+	overflow: hidden;
+
+	-webkit-filter: blur(8px);
+	filter: blur(8px);
+}
+.background-gallery video {
+	width: calc(100vh * (760 / 914));
+	height: 100vh;
+}
+
+#content {
+	flex-direction: column;
+
+	scroll-snap-type: y mandatory;
+}
+
+#project-tetris {
+	background-color: #9AA680;
+}
